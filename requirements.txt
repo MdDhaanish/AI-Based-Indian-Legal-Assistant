@@ -1,0 +1,9 @@
+streamlit
+PyPDF2
+pdfplumber
+pandas
+spacy
+nltk
+scikit-learn
+joblib
+
