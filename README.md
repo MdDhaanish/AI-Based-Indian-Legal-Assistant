@@ -164,18 +164,6 @@ Functional tests included for:
 
 ---
 
-## 📌 Future Enhancements
-
-| Planned Feature             | Purpose                |
-| --------------------------- | ---------------------- |
-| ChromaDB / FAISS RAG        | Semantic law search    |
-| Full Court Judgement search | Case law support       |
-| Hindi / Hinglish output     | Public-friendly access |
-| Cloud deployment            | Public web access      |
-| Upload case PDF             | Custom legal analysis  |
-
----
-
 ## 🏁 Conclusion
 
 This project demonstrates a fully functional **legal RAG assistant** capable of retrieving Indian law sections, providing accurate responses, and simplifying legal language with AI.
