@@ -2,6 +2,9 @@ import streamlit as st
 import json
 import os
 import requests
+import yaml
+from yaml.loader import SafeLoader
+import streamlit_authenticator as stauth
 
 # ------------------- STREAMLIT PAGE CONFIG -------------------
 st.set_page_config(
@@ -47,8 +50,30 @@ div.stTextInput > label {
 </style>
 """, unsafe_allow_html=True)
 
+
+
 # ------------------- API ROUTE -------------------
 API_URL = "http://127.0.0.1:8000/chatbot"
+
+with open('credentials/auth_config.yaml') as file:
+    config = yaml.load(file, Loader=SafeLoader)
+
+authenticator = stauth.Authenticate(
+    credentials=config['credentials'],
+    cookie_name=config['cookie']['name'],
+    cookie_key=config['cookie']['key'],
+    cookie_expiry_days=config['cookie']['expiry_days'],
+)
+
+name = st.session_state.get("name")
+auth_status = st.session_state.get("authentication_status")
+
+if not auth_status:
+    st.error("Please login first.")
+    st.stop()
+
+authenticator.logout("Logout", "sidebar")
+st.sidebar.write(f"👤 {name}")
 
 st.title("⚖️ Legal AI Assistant")
 st.caption("Ask questions related to Indian Law (IPC / CrPC / Constitution) and get simplified, accurate legal answers.")

@@ -1,0 +1,406 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <script
+      src="https://kit.fontawesome.com/e0605fb73d.js"
+      crossorigin="anonymous"
+    ></script>
+    <title>Legal AI Assistant ⚖️</title>
+    <style>
+      * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+      }
+
+      body {
+        font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto,
+          Oxygen, Ubuntu, Cantarell, sans-serif;
+        background: linear-gradient(
+          135deg,
+          #ffffff 0%,
+          #fce7f3 40%,
+          #e879f9 100%
+        );
+        min-height: 100vh;
+        overflow-x: hidden;
+      }
+
+      nav {
+        padding: 1.5rem 2rem;
+        display: flex;
+        justify-content: flex-start;
+        gap: 2rem;
+        background: rgba(255, 255, 255, 0.1);
+        backdrop-filter: blur(10px);
+      }
+
+      nav a {
+        text-decoration: none;
+        color: #374151;
+        font-weight: 500;
+        transition: color 0.3s;
+      }
+
+      nav a:hover {
+        color: #111827;
+      }
+
+      .container {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 2rem 4rem;
+        min-height: calc(100vh - 200px);
+        gap: 4rem;
+        animation: fadeIn 0.6s ease-in-out;
+      }
+
+      .left-section {
+        flex: 1;
+        max-width: 500px;
+      }
+
+      .main-title {
+        font-size: 3.5rem;
+        font-weight: 800;
+        color: #111827;
+        line-height: 1.1;
+        margin-bottom: 1rem;
+      }
+
+      .subtitle {
+        font-size: 1.25rem;
+        color: #6b7280;
+        margin-bottom: 2rem;
+      }
+
+      .upload-label {
+        display: inline-block;
+        padding: 0.5rem 1rem;
+        background: black;
+        color: white;
+        font-weight: bold;
+        font-size: 0.875rem;
+        border-radius: 0.5rem;
+        cursor: pointer;
+        transition: background-color 0.3s;
+      }
+
+      .upload-label:hover {
+        background: #374151;
+      }
+
+      #file-input {
+        display: none;
+      }
+
+      .right-section {
+        flex: 1;
+        max-width: 450px;
+      }
+
+      .chat-window {
+        background: white;
+        border-radius: 1rem;
+        padding: 2rem;
+        box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1),
+          0 10px 10px -5px rgba(0, 0, 0, 0.04);
+      }
+
+      .chat-header {
+        font-size: 1.5rem;
+        font-weight: 700;
+        color: #111827;
+        margin-bottom: 0.5rem;
+      }
+
+      .chat-description {
+        color: #6b7280;
+        margin-bottom: 1.5rem;
+        line-height: 1.5;
+      }
+
+      .chat-input-section {
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+        margin-bottom: 10px;
+      }
+
+      .chat-input {
+        flex: 1;
+        padding: 0.75rem;
+        border: 1px solid #d1d5db;
+        border-radius: 0.5rem;
+        font-size: 1rem;
+      }
+
+      .submit-icon {
+        background: black;
+        color: white;
+        border: none;
+        padding: 0.75rem 1rem;
+        border-radius: 0.5rem;
+        font-size: 1rem;
+        cursor: pointer;
+      }
+
+      .chat-response {
+        margin-top: 1rem;
+        background: #f9fafb;
+        padding: 1rem;
+        border-radius: 0.5rem;
+        font-size: 1rem;
+        color: #111827;
+        line-height: 1.6;
+      }
+
+      .chat-buttons {
+        margin-top: 1rem;
+        display: flex;
+        flex-wrap: wrap;
+        gap: 0.5rem;
+      }
+
+      .chat-button {
+        background: #f3f4f6;
+        color: #374151;
+        border: none;
+        padding: 0.5rem 1rem;
+        border-radius: 0.5rem;
+        font-size: 0.875rem;
+        cursor: pointer;
+        transition: background-color 0.3s;
+      }
+
+      .answer {
+        margin-top: 0.5rem;
+        white-space: pre-wrap;
+        line-height: 1.6;
+      }
+
+      .answer strong {
+        font-weight: bold;
+        color: #111827;
+      }
+
+      .chat-button:hover {
+        background: #e5e7eb;
+      }
+
+      .feedback {
+        margin-top: 1rem;
+        display: flex;
+        flex-wrap: wrap;
+        gap: 0.5rem;
+      }
+
+      .feedback:hover {
+        background: #e5e7eb;
+      }
+
+      .feedback-button {
+        background: #33a3c8;
+        color: #0f100e;
+        border: none;
+        padding: 0.5rem 1rem;
+        border-radius: 0.5rem;
+        font-size: 0.875rem;
+        cursor: pointer;
+        transition: background-color 0.3s;
+      }
+      @keyframes fadeIn {
+        from {
+          opacity: 0;
+          transform: translateY(20px);
+        }
+        to {
+          opacity: 1;
+          transform: translateY(0);
+        }
+      }
+
+      @media (max-width: 768px) {
+        .container {
+          flex-direction: column;
+          padding: 2rem;
+          gap: 2rem;
+        }
+
+        .left-section,
+        .right-section {
+          max-width: 100%;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <div class="container">
+      <!-- Left Section -->
+      <div class="left-section">
+        <h1 class="main-title">Legal AI Assistant and Q&A Chatbot</h1>
+        <p class="subtitle">
+          Ask anything. Get smart, instant answers powered by AI.
+        </p>
+      </div>
+
+      <!-- Right Section -->
+      <div class="right-section">
+        <div class="chat-window">
+          <div class="chat-header">Chat with AI</div>
+          <div class="chat-description">
+            Type your question below or choose a quick prompt:
+          </div>
+
+          <div class="chat-input-section">
+            <input
+              class="chat-input"
+              id="question-input"
+              type="text"
+              placeholder="Type your question here..."
+            />
+            <button
+              id="submit-button"
+              class="submit-icon"
+              onclick="sendMessageToStreamlit()"
+            >
+              <i class="fa-solid fa-arrow-up"></i>
+            </button>
+          </div>
+
+          <div class="chat-buttons">
+            <button
+              class="chat-button"
+              onclick="quickAsk('What is theft under IPC?')"
+            >
+              IPC Theft
+            </button>
+            <button
+              class="chat-button"
+              onclick="quickAsk('Show relevant laws for cybercrime')"
+            >
+              Cybercrime Laws
+            </button>
+            <button
+              class="chat-button"
+              onclick="quickAsk('What are bail provisions?')"
+            >
+              Bail Provisions
+            </button>
+            <button
+              class="chat-button"
+              onclick="quickAsk('What is the process for filing a lawsuit?')"
+            >
+              Filing Lawsuit
+            </button>
+          </div>
+          <div class="feedback">
+          <button class="feedback-button" onclick="sendFeedback('good')">👍 Helpful</button>
+          <button class="feedback-button" onclick="sendFeedback('bad')">👎 Not Helpful</button>
+          </div>
+
+          <div
+            id="chatbox"
+            class="chat-response"
+            style="height: 300px; overflow-y: auto"
+          ></div>
+        </div>
+      </div>
+    </div>
+
+    <script>
+      function changePlaceholder(name) {
+        var inputfield = document.getElementById("question-input");
+        inputfield.placeholder = "" + name;
+      }
+
+      const input = document.getElementById("question-input");
+      const buttons = document.querySelectorAll(".chat-button");
+
+      buttons.forEach((btn) => {
+        btn.addEventListener("click", () => {
+          input.value = btn.textContent.trim(); // paste text into input
+          input.focus(); // optional: focus input
+        });
+      });
+
+      // helper to append messages
+      function appendMessage(text, isUser = false) {
+        const bubble = document.createElement("div");
+        bubble.className = isUser ? "user-message" : "ai-message";
+        bubble.innerHTML = text;
+        document.getElementById("chatbox").appendChild(bubble);
+        document.getElementById("chatbox").scrollTop =
+          document.getElementById("chatbox").scrollHeight;
+      }
+
+      // direct backend call using fetch (no Streamlit bridge)
+      async function sendMessageDirect() {
+        const input = document.getElementById("question-input");
+        const msg = input.value.trim();
+        if (!msg) return;
+
+        // show user message immediately
+        appendMessage("<b>You:</b> " + msg, true);
+        input.value = "";
+
+        try {
+          const resp = await fetch("http://localhost:8000/chat", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ question: msg }),
+          });
+
+          if (!resp.ok) {
+            const txt = await resp.text();
+            appendMessage("<b>AI:</b> Error from backend: " + txt);
+            return;
+          }
+
+          const data = await resp.json();
+
+          let formatted = `
+            <div><b>Simple Explanation:</b><br>${data.simple}</div><br>
+            <div><b>Legal Explanation:</b><br>${data.legal}</div>
+        `; 
+
+          appendMessage(formatted, false);
+        } catch (error) {
+          appendMessage(  
+            "<b>AI:</b> Error communicating with backend: " + error.message
+          );
+        }
+      }
+      // quick ask buttons use same function
+      function quickAsk(q) {
+        document.getElementById("question-input").value = q;
+        sendMessageDirect();
+      }
+
+      // wire the send button (if your button has id sendBtn)
+      document.addEventListener("DOMContentLoaded", function () {
+        const sendBtn =
+          document.getElementById("sendBtn") ||
+          document.getElementById("send-button");
+        if (sendBtn) {
+          sendBtn.addEventListener("click", sendMessageDirect);
+        }
+      });
+      async function sendFeedback(type) {
+        await fetch("http://localhost:8000/feedback", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+          rating: type,
+          message: lastAiResponse
+       })
+  });
+}
+
+    </script>
+  </body>
+</html>
