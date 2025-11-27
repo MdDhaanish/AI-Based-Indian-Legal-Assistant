@@ -74,7 +74,7 @@ Google Gemini API
 
 ---
 
-## 📂 Project Structure
+## 📂 Main Project Structure
 
 ```
 
