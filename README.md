@@ -17,7 +17,7 @@ The system uses a **React frontend**, **FastAPI backend**, **Google authenticati
 ✅ YAML-based credential storage  
 ✅ Feedback system (Helpful / Not Helpful)  
 ✅ FastAPI backend + Gemini AI  
-✅ Modern React (Lovable) UI  
+✅ Modern React UI  
 
 ---
 
