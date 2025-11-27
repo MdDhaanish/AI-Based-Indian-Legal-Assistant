@@ -1,9 +1,23 @@
-streamlit
-PyPDF2
-pdfplumber
-pandas
-spacy
-nltk
-scikit-learn
-joblib
+# -------- Core Backend Framework --------
+fastapi
+uvicorn
 
+# -------- Environment & Config --------
+python-dotenv
+pyyaml
+
+# -------- Authentication & Security --------
+bcrypt
+pyjwt
+google-auth
+google-auth-oauthlib
+requests
+
+# -------- AI / LLM --------
+google-generativeai
+
+# -------- Data Handling --------
+pydantic
+
+# -------- CORS / Web --------
+starlette

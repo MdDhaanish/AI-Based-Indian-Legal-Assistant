@@ -1,6 +1,5 @@
 import { useState, useEffect, useRef } from "react";
 import { useNavigate } from "react-router-dom";
-import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card } from "@/components/ui/card";
@@ -8,8 +7,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { useToast } from "@/hooks/use-toast";
 import { Scale, Send, LogOut, User, Bot, Loader2 } from "lucide-react";
-import { sendQuestion, sendFeedback } from "./chatService"; // new service (relative path)
-import { Database } from "@/integrations/supabase/types"; // if you have types, optional
+import { askBackend , sendFeedback } from "./chatService"; 
 
 interface Message {
   id: string;
@@ -18,6 +16,7 @@ interface Message {
   simpleExplanation?: string;
   legalExplanation?: string;
 }
+
 
 const Chat = () => {
   const [messages, setMessages] = useState<Message[]>([]);
@@ -29,108 +28,75 @@ const Chat = () => {
   const scrollAreaRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
-    const checkUser = async () => {
-      const {
-        data: { session },
-      } = await supabase.auth.getSession();
-      if (!session) {
-        navigate("/auth");
-      } else {
-        setUserEmail(session.user.email || "");
-      }
-    };
-    checkUser();
+  const token = localStorage.getItem("auth_token");
+  
 
-    const {
-      data: { subscription },
-    } = supabase.auth.onAuthStateChange((event, session) => {
-      if (!session) {
-        navigate("/auth");
-      }
-    });
-
-    return () => subscription.unsubscribe();
-  }, [navigate]);
+  if (!token) {
+    navigate("/auth", { replace: true });
+  }
+}, []);
 
   useEffect(() => {
-    if (scrollAreaRef.current) {
-      scrollAreaRef.current.scrollTop = scrollAreaRef.current.scrollHeight;
-    }
-  }, [messages]);
+  const email = localStorage.getItem("user_email") || "";
+  setUserEmail(email);
+  }, []);
 
-  const handleSignOut = async () => {
-    await supabase.auth.signOut();
-    navigate("/auth");
+  const handleSignOut = () => {
+    localStorage.removeItem("auth_token");
+    localStorage.removeItem("user_name");
+    navigate("/auth", { replace: true });
+  }
+  
+  const handleSend = async () => {
+  if (!input.trim() || loading) return;
+
+  const userMessage: Message = {
+    id: Date.now().toString(),
+    role: "user",
+    content: input,
   };
 
-  // top of file: add imports
+  // Add user bubble to UI
+  setMessages((prev) => [...prev, userMessage]);
+  const question = input;
+  setInput("");
+  setLoading(true);
 
-  // --- inside component replace the existing handleSend with this ---
-  const handleSend = async () => {
-    if (!input.trim() || loading) return;
+  try {
+    const data = await askBackend(question);
 
-    const userMessage: Message = {
-      id: Date.now().toString(),
-      role: "user",
-      content: input,
+    // Backend must return: { simple, legal }
+    const botMessage: Message = {
+      id: (Date.now() + 1).toString(),
+      role: "assistant",
+      content: "",
+      simpleExplanation: data.simple || "No simple explanation",
+      legalExplanation: data.legal || "No legal explanation",
     };
 
-    // push user message
-    setMessages((prev) => [...prev, userMessage]);
-    const questionText = input;
-    setInput("");
-    setLoading(true);
+    // Add AI message to UI
+    setMessages((prev) => [...prev, botMessage]);
 
-    try {
-      // call backend
-      const data = await sendQuestion(questionText);
+    // OPTIONAL: Save history in Supabase
+    
 
-      // backend may return { simple, legal } OR { answer }
-      const botMessage: Message = {
-        id: (Date.now() + 1).toString(),
-        role: "assistant",
-        content: data.simple || data.answer || "No answer",
-        simpleExplanation: data.simple || data.answer || "",
-        legalExplanation:
-          data.legal || data.legalExplanation || data.sections || "",
-      };
+  } catch (err: any) {
+    const errorMessage: Message = {
+      id: (Date.now() + 2).toString(),
+      role: "assistant",
+      content: `Error contacting backend: ${err.message}`,
+      simpleExplanation: `Error: ${err.message}`,
+      legalExplanation: "",
+    };
+    setMessages((prev) => [...prev, errorMessage]);
+  } finally {
+    setLoading(false);
+  }
 
-      // save message to state
-      setMessages((prev) => [...prev, botMessage]);
+  
 
-      // optional: store chat in Supabase for chat history
-      try {
-        const user = supabase.auth.getUser
-          ? (await supabase.auth.getUser()).data.user
-          : null;
-        if (user) {
-          await supabase.from("chats").insert([
-            {
-              user_id: user.id,
-              question: questionText,
-              answer_simple: botMessage.simpleExplanation,
-              answer_legal: botMessage.legalExplanation,
-              created_at: new Date().toISOString(),
-            },
-          ]);
-        }
-      } catch (dbErr) {
-        console.warn("Failed to save chat history:", dbErr);
-      }
-    } catch (err: any) {
-      // push an error assistant message
-      const errMsg: Message = {
-        id: (Date.now() + 2).toString(),
-        role: "assistant",
-        content: `Error: ${err.message || err}`,
-        simpleExplanation: `Error: ${err.message || err}`,
-        legalExplanation: "",
-      };
-      setMessages((prev) => [...prev, errMsg]);
-    } finally {
-      setLoading(false);
-    }
-  };
+};
+
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-background via-background to-muted">
@@ -145,7 +111,7 @@ const Chat = () => {
               <h1 className="text-xl font-bold text-foreground">
                 LegalAI Assistant
               </h1>
-              <p className="text-xs text-muted-foreground">Powered by AI</p>
+              <p className="text-xs text-muted-foreground">Act Wisely!</p>
             </div>
           </div>
           <div className="flex items-center gap-4">
@@ -232,7 +198,7 @@ const Chat = () => {
                             onClick={async () => {
                               await sendFeedback({
                                 user: userEmail || null,
-                                question: message.content,
+                                question:  messages[messages.length - 2]?.content || "",
                                 rating: "up",
                               });
                               toast({ title: "Thanks for the feedback!" });

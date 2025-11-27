@@ -1,6 +1,5 @@
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -8,74 +7,131 @@ import { Card } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useToast } from "@/hooks/use-toast";
 import { Scale, Sparkles } from "lucide-react";
+import axios from "axios";
+
+
+declare global {
+  interface Window {
+    google: any;
+  }
+}
+
+const google = window.google;
+
+const API_URL = import.meta.env.VITE_API_URL || "http://localhost:8000";
 
 const Auth = () => {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [name, setName] = useState("");
   const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
   const navigate = useNavigate();
   const { toast } = useToast();
 
-  useEffect(() => {
-    // Check if user is already logged in
-    const checkUser = async () => {
-      const { data: { session } } = await supabase.auth.getSession();
-      if (session) {
-        navigate("/");
-      }
-    };
-    checkUser();
-  }, [navigate]);
-
-  const handleSignUp = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setLoading(true);
-
-    const { error } = await supabase.auth.signUp({
-      email,
-      password,
-      options: {
-        emailRedirectTo: `${window.location.origin}/`,
-      },
-    });
-
-    setLoading(false);
-
-    if (error) {
-      toast({
-        title: "Sign up failed",
-        description: error.message,
-        variant: "destructive",
-      });
-    } else {
-      toast({
-        title: "Success!",
-        description: "Your account has been created. You can now sign in.",
-      });
-    }
-  };
-
   const handleSignIn = async (e: React.FormEvent) => {
     e.preventDefault();
+    setError(null);
     setLoading(true);
 
-    const { error } = await supabase.auth.signInWithPassword({
-      email,
-      password,
-    });
-
-    setLoading(false);
-
-    if (error) {
-      toast({
-        title: "Sign in failed",
-        description: error.message,
-        variant: "destructive",
+    try {
+      const res = await fetch(`${API_URL}/auth/login`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        credentials: "include", // important: allow cookie to be set
+        body: JSON.stringify({ email, password }),
       });
-    } else {
-      navigate("/");
+
+      if (!res.ok) {
+        const txt = await res.text();
+        throw new Error(txt || "Login failed");
+      }
+
+      const data = await res.json();
+      // store token (optional - cookie is already set by backend)
+      localStorage.setItem("auth_token", data.token);
+      localStorage.setItem("user_name", data.user?.name || "");
+      localStorage.setItem("user_email", data.user?.email || "");
+      localStorage.setItem("token", data.token);
+      navigate("/chat", { replace: true });
+
+      // redirect to chat page
+      //setTimeout(() => navigate("/chat"), 50);
+    } catch (err: any) {
+      setError(err.message || "Login error");
+    } finally {
+      setLoading(false);
     }
   };
+  
+  
+async function handleGoogleLoginResponse(response: any) {
+  try {
+    const backendResponse = await axios.post(`${API_URL}/auth/google`, {
+      id_token: response.credential
+    });
+
+    if (backendResponse.data.success) {
+      localStorage.setItem("auth_token", backendResponse.data.token);
+      localStorage.setItem("user_email", backendResponse.data.email || "");
+      localStorage.setItem("user_name", backendResponse.data.name || "");
+      navigate("/chat", { replace: true });
+    }
+  } catch (err) {
+    console.log(err);
+  }
+}
+
+// Google One-Tap
+useEffect(() => {
+  /* global google */
+  google.accounts.id.initialize({
+    client_id: import.meta.env.VITE_GOOGLE_CLIENT_ID,
+    callback: handleGoogleLoginResponse,
+  });
+
+  google.accounts.id.renderButton(
+    document.getElementById("googleLoginDiv"),
+    { theme: "outline", size: "large" }
+  );
+}, []);
+
+
+
+  const handleSignUp = async (e: React.FormEvent) => {
+  e.preventDefault();
+  setLoading(true);
+  setError(null);
+
+  try {
+    const res = await fetch(`${API_URL}/auth/signup`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        name,
+        email,
+        password,
+      }),
+    });
+
+    if (!res.ok) {
+      const txt = await res.text();
+      throw new Error(txt);
+    }
+
+    toast({
+      title: "Account created",
+      description: "You can now sign in",
+    });
+
+  } catch (err: any) {
+    setError(err.message || "Signup failed");
+  } finally {
+    setLoading(false);
+  }
+};
+
+
 
   return (
     <div className="min-h-screen flex items-center justify-center p-4 bg-gradient-to-br from-background via-background to-muted">
@@ -103,6 +159,28 @@ const Auth = () => {
             </TabsList>
 
             <TabsContent value="signin">
+              <div id="googleLoginDiv" className="flex justify-center mb-4">
+
+              <div style={{ textAlign: "center", marginBottom: "18px" }}>
+              <div style={{
+                  display: "inline-flex",
+                  alignItems: "center",
+                  gap: "10px",
+                  padding: "10px 18px",
+                  background: "white",
+                  borderRadius: "8px",
+                  border: "1px solid #ddd",
+                  boxShadow: "0 2px 6px rgba(0,0,0,0.08)",
+                  textDecoration: "none",
+                  color: "#222",
+                  fontWeight: "500",
+                  cursor: "pointer"
+                }}>
+                <img src="https://developers.google.com/identity/images/g-logo.png" width="20"/>
+                <span style={{ fontWeight: "600" }}>Continue with Google</span>
+              </div>
+              </div>
+              </div>
               <form onSubmit={handleSignIn} className="space-y-4">
                 <div className="space-y-2">
                   <Label htmlFor="signin-email">Email</Label>
@@ -141,12 +219,24 @@ const Auth = () => {
             <TabsContent value="signup">
               <form onSubmit={handleSignUp} className="space-y-4">
                 <div className="space-y-2">
+                  <Label htmlFor="signup-name">Name</Label>
+                  <Input
+                    id="signup-name"
+                    type="text"
+                    placeholder="Enter your name"
+                    value={name}
+                    onChange={(e) => setName(e.target.value)}
+                    required
+                    className="transition-all focus:ring-2 focus:ring-primary"
+                  />
+                </div>
+                <div className="space-y-2">
                   <Label htmlFor="signup-email">Email</Label>
                   <Input
                     id="signup-email"
                     type="email"
-                    placeholder="Enter your email"
                     value={email}
+                    placeholder="Enter your email"
                     onChange={(e) => setEmail(e.target.value)}
                     required
                     className="transition-all focus:ring-2 focus:ring-primary"
