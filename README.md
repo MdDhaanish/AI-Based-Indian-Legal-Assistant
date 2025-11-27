@@ -25,7 +25,7 @@ The system uses a **React frontend**, **FastAPI backend**, **Google authenticati
 
 ```
 
-React (Lovable UI)
+React 
 |
 |  → Auth (Google / Email)
 |  → Chat Queries
@@ -47,7 +47,7 @@ Google Gemini API
 ### **Frontend**
 | Tech | Purpose |
 |---|---|
-| React (Lovable) | UI |
+| React | UI |
 | React Router | Routing |
 | Shadcn UI | Components |
 | Axios / Fetch | API calls |
